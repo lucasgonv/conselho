@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roleta Instantânea</title>
+<style>
+  :root{
+    --bg:#111319;
+    --panel:#1a1d26;
+    --panel-2:#20232e;
+    --border:#2b2f3d;
+    --text:#eeeee6;
+    --muted:#8b8f9e;
+    --accent:#ffc93c;
+    --accent-dim:#3a3419;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  }
+
+  body{
+    padding:32px 20px 80px;
+  }
+
+  header{
+    max-width:1100px;
+    margin:0 auto 20px;
+    display:flex;
+    justify-content:flex-end;
+  }
+
+  button{
+    font-family:inherit;
+    cursor:pointer;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    border-radius:6px;
+    padding:10px 16px;
+    font-size:14px;
+    font-weight:600;
+  }
+
+  button:hover{
+    border-color:var(--accent);
+  }
+
+  #add-btn{
+    background:var(--accent);
+    color:#1a1508;
+    border-color:var(--accent);
+    white-space:nowrap;
+  }
+
+  #add-btn:hover{
+    background:#ffd766;
+  }
+
+  #grid{
+    max-width:1100px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+    gap:16px;
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .card-head{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .card-head input{
+    flex:1;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid transparent;
+    color:var(--text);
+    font-size:15px;
+    font-weight:600;
+    padding:2px 0;
+  }
+
+  .card-head input:focus{
+    outline:none;
+    border-bottom-color:var(--accent);
+  }
+
+  .remove-btn{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--muted);
+    width:26px;
+    height:26px;
+    padding:0;
+    border-radius:6px;
+    line-height:1;
+    font-size:14px;
+  }
+
+  .remove-btn:hover{
+    color:#ff6b6b;
+    border-color:#ff6b6b;
+  }
+
+  textarea{
+    width:100%;
+    min-height:120px;
+    resize:vertical;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:6px;
+    padding:10px;
+    font-family:inherit;
+    font-size:13px;
+    line-height:1.5;
+  }
+
+  textarea:focus{
+    outline:none;
+    border-color:var(--accent);
+  }
+
+  textarea::placeholder{
+    color:var(--muted);
+  }
+
+  .sortear-btn{
+    width:100%;
+    background:var(--accent);
+    color:#1a1508;
+    border-color:var(--accent);
+    padding:10px;
+  }
+
+  .sortear-btn:hover{
+    background:#ffd766;
+  }
+
+  .sortear-btn:disabled{
+    opacity:0.6;
+    cursor:default;
+  }
+
+  .result{
+    min-height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:8px 10px;
+    font-size:16px;
+    font-weight:700;
+    color:var(--muted);
+    word-break:break-word;
+    transition:border-color 0.15s, color 0.15s;
+  }
+
+  .result.filled{
+    color:var(--accent);
+    border-color:var(--accent);
+  }
+
+  .hint{
+    font-size:11px;
+    color:var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="add-btn" type="button">+ Nova roleta</button>
+</header>
+
+<div id="grid"></div>
+
+<template id="card-template">
+  <div class="card">
+    <div class="card-head">
+      <input type="text" class="title-input" value="Roleta">
+      <button class="remove-btn" type="button" title="Remover">×</button>
+    </div>
+    <textarea class="names-input" placeholder="lucas&#10;yuri&#10;renzo&#10;daniel"></textarea>
+    <div class="result">o resultado aparece aqui</div>
+    <button class="sortear-btn" type="button">Sortear</button>
+    <div class="hint">um nome por linha</div>
+  </div>
+</template>
+
+<script>
+(function(){
+  const grid = document.getElementById('grid');
+  const template = document.getElementById('card-template');
+  const addBtn = document.getElementById('add-btn');
+  let counter = 0;
+
+  function createCard(){
+    counter++;
+    const node = template.content.firstElementChild.cloneNode(true);
+    node.querySelector('.title-input').value = 'Roleta ' + counter;
+
+    const removeBtn = node.querySelector('.remove-btn');
+    const sortearBtn = node.querySelector('.sortear-btn');
+    const namesInput = node.querySelector('.names-input');
+    const result = node.querySelector('.result');
+
+    removeBtn.addEventListener('click', function(){
+      node.remove();
+    });
+
+    sortearBtn.addEventListener('click', function(){
+      const names = namesInput.value
+        .split('\n')
+        .map(function(s){ return s.trim(); })
+        .filter(function(s){ return s.length > 0; });
+
+      if (names.length === 0){
+        result.textContent = 'adicione ao menos um item';
+        result.classList.remove('filled');
+        return;
+      }
+
+      sortearBtn.disabled = true;
+      let ticks = 0;
+      const maxTicks = 14 + Math.floor(Math.random() * 8);
+
+      const interval = setInterval(function(){
+        const pick = names[Math.floor(Math.random() * names.length)];
+        result.textContent = pick;
+        result.classList.add('filled');
+        ticks++;
+        if (ticks >= maxTicks){
+          clearInterval(interval);
+          sortearBtn.disabled = false;
+        }
+      }, 70);
+    });
+
+    grid.appendChild(node);
+  }
+
+  addBtn.addEventListener('click', createCard);
+
+  // começa com 3 roletas prontas para uso
+  createCard();
+  createCard();
+  createCard();
+})();
+</script>
+
+</body>
+</html>
