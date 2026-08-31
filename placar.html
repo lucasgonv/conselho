@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Placar</title>
+<style>
+  :root{
+    --bg:#111319; --panel:#1a1d26; --panel-2:#20232e; --border:#2b2f3d;
+    --text:#eeeee6; --muted:#8b8f9e; --accent:#ffc93c; --accent-text:#1a1508;
+  }
+  html[data-theme="light"]{
+    --bg:#f5f4f0; --panel:#ffffff; --panel-2:#eeece5; --border:#dcd9d0;
+    --text:#1c1c1c; --muted:#6b6b6b; --accent:#c98a1a; --accent-text:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+  body{padding:70px 20px 80px;}
+  a.back-link{position:fixed;top:16px;left:16px;color:var(--muted);text-decoration:none;
+    font-size:14px;border:1px solid var(--border);background:var(--panel-2);
+    border-radius:6px;padding:8px 12px;}
+  a.back-link:hover{border-color:var(--accent);color:var(--text);}
+  button.theme-toggle{position:fixed;top:16px;right:16px;}
+  button{font-family:inherit;cursor:pointer;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--text);border-radius:6px;
+    padding:10px 16px;font-size:14px;font-weight:600;}
+  button:hover{border-color:var(--accent);}
+  .wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
+  .add-row{display:flex;gap:8px;}
+  .add-row input{flex:1;background:var(--panel-2);border:1px solid var(--border);
+    color:var(--text);border-radius:6px;padding:10px;font-family:inherit;font-size:14px;}
+  .add-row input:focus{outline:none;border-color:var(--accent);}
+  .add-row button{background:var(--accent);color:var(--accent-text);border-color:var(--accent);
+    white-space:nowrap;}
+  .add-row button:hover{opacity:0.9;}
+  .players{display:flex;flex-direction:column;gap:10px;}
+  .player{background:var(--panel);border:1px solid var(--border);border-radius:8px;
+    padding:12px 16px;display:flex;align-items:center;gap:12px;}
+  .player .name{flex:1;font-weight:600;font-size:15px;}
+  .player .score{font-size:22px;font-weight:700;color:var(--accent);min-width:36px;
+    text-align:center;font-variant-numeric:tabular-nums;}
+  .player .ctrl{width:34px;height:34px;padding:0;font-size:16px;}
+  .player .remove-btn{background:transparent;color:var(--muted);border-color:var(--border);
+    width:28px;height:28px;padding:0;font-size:13px;}
+  .player .remove-btn:hover{color:#ff6b6b;border-color:#ff6b6b;}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:20px 0;}
+</style>
+</head>
+<body>
+
+<a class="back-link" href="index.html">← Início</a>
+<button class="theme-toggle" id="theme-toggle" type="button">Modo claro</button>
+
+<div class="wrap">
+  <div class="add-row">
+    <input type="text" id="new-name" placeholder="Nome do jogador">
+    <button id="add-btn" type="button">Adicionar</button>
+  </div>
+  <div class="players" id="players">
+    <p class="empty">adicione jogadores para começar</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('theme-toggle');
+  function applyTheme(theme){
+    root.setAttribute('data-theme', theme);
+    themeBtn.textContent = theme === 'light' ? 'Modo escuro' : 'Modo claro';
+    localStorage.setItem('theme', theme);
+  }
+  applyTheme(localStorage.getItem('theme')
+    || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+  themeBtn.addEventListener('click', function(){
+    applyTheme(root.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+  });
+})();
+
+(function(){
+  const nameInput = document.getElementById('new-name');
+  const addBtn = document.getElementById('add-btn');
+  const playersEl = document.getElementById('players');
+
+  function clearEmpty(){
+    const empty = playersEl.querySelector('.empty');
+    if (empty) empty.remove();
+  }
+
+  function addPlayer(name){
+    clearEmpty();
+    const div = document.createElement('div');
+    div.className = 'player';
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'name';
+    nameSpan.textContent = name;
+
+    const minusBtn = document.createElement('button');
+    minusBtn.className = 'ctrl';
+    minusBtn.type = 'button';
+    minusBtn.textContent = '−';
+
+    const scoreSpan = document.createElement('span');
+    scoreSpan.className = 'score';
+    scoreSpan.textContent = '0';
+
+    const plusBtn = document.createElement('button');
+    plusBtn.className = 'ctrl';
+    plusBtn.type = 'button';
+    plusBtn.textContent = '+';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
+    removeBtn.type = 'button';
+    removeBtn.textContent = '×';
+
+    let score = 0;
+    plusBtn.addEventListener('click', function(){
+      score++;
+      scoreSpan.textContent = score;
+    });
+    minusBtn.addEventListener('click', function(){
+      score--;
+      scoreSpan.textContent = score;
+    });
+    removeBtn.addEventListener('click', function(){
+      div.remove();
+      if (!playersEl.querySelector('.player')){
+        playersEl.innerHTML = '<p class="empty">adicione jogadores para começar</p>';
+      }
+    });
+
+    div.appendChild(nameSpan);
+    div.appendChild(minusBtn);
+    div.appendChild(scoreSpan);
+    div.appendChild(plusBtn);
+    div.appendChild(removeBtn);
+    playersEl.appendChild(div);
+  }
+
+  function submit(){
+    const name = nameInput.value.trim();
+    if (!name) return;
+    addPlayer(name);
+    nameInput.value = '';
+    nameInput.focus();
+  }
+
+  addBtn.addEventListener('click', submit);
+  nameInput.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') submit();
+  });
+})();
+</script>
+
+</body>
+</html>

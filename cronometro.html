@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cronômetro</title>
+<style>
+  :root{
+    --bg:#111319; --panel:#1a1d26; --panel-2:#20232e; --border:#2b2f3d;
+    --text:#eeeee6; --muted:#8b8f9e; --accent:#ffc93c; --accent-text:#1a1508;
+  }
+  html[data-theme="light"]{
+    --bg:#f5f4f0; --panel:#ffffff; --panel-2:#eeece5; --border:#dcd9d0;
+    --text:#1c1c1c; --muted:#6b6b6b; --accent:#c98a1a; --accent-text:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+  body{padding:70px 20px 80px;}
+  a.back-link{position:fixed;top:16px;left:16px;color:var(--muted);text-decoration:none;
+    font-size:14px;border:1px solid var(--border);background:var(--panel-2);
+    border-radius:6px;padding:8px 12px;}
+  a.back-link:hover{border-color:var(--accent);color:var(--text);}
+  button.theme-toggle{position:fixed;top:16px;right:16px;}
+  button{font-family:inherit;cursor:pointer;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--text);border-radius:6px;
+    padding:10px 16px;font-size:14px;font-weight:600;}
+  button:hover{border-color:var(--accent);}
+  .wrap{max-width:420px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:8px;
+    padding:24px;display:flex;flex-direction:column;align-items:center;gap:16px;}
+  .card h2{margin:0;font-size:14px;color:var(--muted);font-weight:600;
+    text-transform:uppercase;letter-spacing:0.05em;}
+  .display{font-size:44px;font-weight:700;font-variant-numeric:tabular-nums;
+    color:var(--accent);}
+  .config{display:flex;gap:10px;}
+  .field{display:flex;flex-direction:column;gap:4px;align-items:center;}
+  .field label{font-size:11px;color:var(--muted);}
+  .field input{width:64px;background:var(--panel-2);border:1px solid var(--border);
+    color:var(--text);border-radius:6px;padding:8px;font-family:inherit;font-size:14px;
+    text-align:center;}
+  .field input:focus{outline:none;border-color:var(--accent);}
+  .btn-row{display:flex;gap:8px;width:100%;}
+  .btn-row button{flex:1;}
+  .primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent);}
+  .primary:hover{opacity:0.9;}
+</style>
+</head>
+<body>
+
+<a class="back-link" href="index.html">← Início</a>
+<button class="theme-toggle" id="theme-toggle" type="button">Modo claro</button>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>Contagem regressiva</h2>
+    <div class="display" id="cd-display">05:00</div>
+    <div class="config">
+      <div class="field">
+        <label for="cd-min">min</label>
+        <input type="number" id="cd-min" value="5" min="0">
+      </div>
+      <div class="field">
+        <label for="cd-sec">seg</label>
+        <input type="number" id="cd-sec" value="0" min="0" max="59">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="primary" id="cd-start" type="button">Iniciar</button>
+      <button id="cd-reset" type="button">Zerar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Cronômetro</h2>
+    <div class="display" id="sw-display">00:00</div>
+    <div class="btn-row">
+      <button class="primary" id="sw-start" type="button">Iniciar</button>
+      <button id="sw-reset" type="button">Zerar</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('theme-toggle');
+  function applyTheme(theme){
+    root.setAttribute('data-theme', theme);
+    themeBtn.textContent = theme === 'light' ? 'Modo escuro' : 'Modo claro';
+    localStorage.setItem('theme', theme);
+  }
+  applyTheme(localStorage.getItem('theme')
+    || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+  themeBtn.addEventListener('click', function(){
+    applyTheme(root.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+  });
+})();
+
+function formatTime(totalSeconds){
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+// contagem regressiva
+(function(){
+  const display = document.getElementById('cd-display');
+  const minInput = document.getElementById('cd-min');
+  const secInput = document.getElementById('cd-sec');
+  const startBtn = document.getElementById('cd-start');
+  const resetBtn = document.getElementById('cd-reset');
+
+  let remaining = 300;
+  let timer = null;
+  let running = false;
+
+  function render(){
+    display.textContent = formatTime(Math.max(remaining, 0));
+  }
+
+  function setFromInputs(){
+    const m = Math.max(parseInt(minInput.value) || 0, 0);
+    const s = Math.min(Math.max(parseInt(secInput.value) || 0, 0), 59);
+    remaining = m * 60 + s;
+    render();
+  }
+
+  setFromInputs();
+  minInput.addEventListener('change', function(){ if (!running) setFromInputs(); });
+  secInput.addEventListener('change', function(){ if (!running) setFromInputs(); });
+
+  startBtn.addEventListener('click', function(){
+    if (running){
+      clearInterval(timer);
+      running = false;
+      startBtn.textContent = 'Continuar';
+      return;
+    }
+    if (remaining <= 0) return;
+    running = true;
+    startBtn.textContent = 'Pausar';
+    timer = setInterval(function(){
+      remaining--;
+      render();
+      if (remaining <= 0){
+        clearInterval(timer);
+        running = false;
+        startBtn.textContent = 'Iniciar';
+      }
+    }, 1000);
+  });
+
+  resetBtn.addEventListener('click', function(){
+    clearInterval(timer);
+    running = false;
+    startBtn.textContent = 'Iniciar';
+    setFromInputs();
+  });
+})();
+
+// cronômetro (contagem crescente)
+(function(){
+  const display = document.getElementById('sw-display');
+  const startBtn = document.getElementById('sw-start');
+  const resetBtn = document.getElementById('sw-reset');
+
+  let elapsed = 0;
+  let timer = null;
+  let running = false;
+
+  function render(){
+    display.textContent = formatTime(elapsed);
+  }
+
+  startBtn.addEventListener('click', function(){
+    if (running){
+      clearInterval(timer);
+      running = false;
+      startBtn.textContent = 'Continuar';
+      return;
+    }
+    running = true;
+    startBtn.textContent = 'Pausar';
+    timer = setInterval(function(){
+      elapsed++;
+      render();
+    }, 1000);
+  });
+
+  resetBtn.addEventListener('click', function(){
+    clearInterval(timer);
+    running = false;
+    elapsed = 0;
+    startBtn.textContent = 'Iniciar';
+    render();
+  });
+})();
+</script>
+
+</body>
+</html>

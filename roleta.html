@@ -13,7 +13,18 @@
     --text:#eeeee6;
     --muted:#8b8f9e;
     --accent:#ffc93c;
-    --accent-dim:#3a3419;
+    --accent-text:#1a1508;
+  }
+
+  html[data-theme="light"]{
+    --bg:#f5f4f0;
+    --panel:#ffffff;
+    --panel-2:#eeece5;
+    --border:#dcd9d0;
+    --text:#1c1c1c;
+    --muted:#6b6b6b;
+    --accent:#c98a1a;
+    --accent-text:#ffffff;
   }
 
   *{box-sizing:border-box;}
@@ -27,7 +38,7 @@
   }
 
   body{
-    padding:32px 20px 80px;
+    padding:70px 20px 80px;
   }
 
   header{
@@ -55,13 +66,37 @@
 
   #add-btn{
     background:var(--accent);
-    color:#1a1508;
+    color:var(--accent-text);
     border-color:var(--accent);
     white-space:nowrap;
   }
 
   #add-btn:hover{
-    background:#ffd766;
+    opacity:0.9;
+  }
+
+  .theme-toggle{
+    position:fixed;
+    top:16px;
+    right:16px;
+  }
+
+  .back-link{
+    position:fixed;
+    top:16px;
+    left:16px;
+    color:var(--muted);
+    text-decoration:none;
+    font-size:14px;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    border-radius:6px;
+    padding:8px 12px;
+  }
+
+  .back-link:hover{
+    border-color:var(--accent);
+    color:var(--text);
   }
 
   #grid{
@@ -147,13 +182,13 @@
   .sortear-btn{
     width:100%;
     background:var(--accent);
-    color:#1a1508;
+    color:var(--accent-text);
     border-color:var(--accent);
     padding:10px;
   }
 
   .sortear-btn:hover{
-    background:#ffd766;
+    opacity:0.9;
   }
 
   .sortear-btn:disabled{
@@ -191,6 +226,9 @@
 </head>
 <body>
 
+<a class="back-link" href="index.html">← Início</a>
+<button class="theme-toggle" id="theme-toggle" type="button">Modo claro</button>
+
 <header>
   <button id="add-btn" type="button">+ Nova roleta</button>
 </header>
@@ -211,6 +249,25 @@
 </template>
 
 <script>
+(function(){
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('theme-toggle');
+
+  function applyTheme(theme){
+    root.setAttribute('data-theme', theme);
+    themeBtn.textContent = theme === 'light' ? 'Modo escuro' : 'Modo claro';
+    localStorage.setItem('theme', theme);
+  }
+
+  const savedTheme = localStorage.getItem('theme')
+    || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  applyTheme(savedTheme);
+
+  themeBtn.addEventListener('click', function(){
+    applyTheme(root.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+  });
+})();
+
 (function(){
   const grid = document.getElementById('grid');
   const template = document.getElementById('card-template');

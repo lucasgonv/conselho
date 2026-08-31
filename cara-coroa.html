@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cara ou Coroa</title>
+<style>
+  :root{
+    --bg:#111319; --panel:#1a1d26; --panel-2:#20232e; --border:#2b2f3d;
+    --text:#eeeee6; --muted:#8b8f9e; --accent:#ffc93c; --accent-text:#1a1508;
+  }
+  html[data-theme="light"]{
+    --bg:#f5f4f0; --panel:#ffffff; --panel-2:#eeece5; --border:#dcd9d0;
+    --text:#1c1c1c; --muted:#6b6b6b; --accent:#c98a1a; --accent-text:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+  body{padding:70px 20px 80px;display:flex;justify-content:center;}
+  a.back-link{position:fixed;top:16px;left:16px;color:var(--muted);text-decoration:none;
+    font-size:14px;border:1px solid var(--border);background:var(--panel-2);
+    border-radius:6px;padding:8px 12px;}
+  a.back-link:hover{border-color:var(--accent);color:var(--text);}
+  button.theme-toggle{position:fixed;top:16px;right:16px;}
+  button{font-family:inherit;cursor:pointer;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--text);border-radius:6px;
+    padding:10px 16px;font-size:14px;font-weight:600;}
+  button:hover{border-color:var(--accent);}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:8px;
+    padding:32px;width:100%;max-width:320px;display:flex;flex-direction:column;
+    align-items:center;gap:20px;}
+  .coin{width:120px;height:120px;border-radius:50%;background:var(--accent);
+    color:var(--accent-text);display:flex;align-items:center;justify-content:center;
+    font-size:20px;font-weight:700;border:3px solid var(--border);
+    transition:transform 0.5s ease;}
+  .coin.spin{transform:rotateY(1440deg);}
+  .flip-btn{background:var(--accent);color:var(--accent-text);border-color:var(--accent);
+    padding:12px 24px;font-size:15px;width:100%;}
+  .flip-btn:hover{opacity:0.9;}
+  .flip-btn:disabled{opacity:0.6;cursor:default;}
+</style>
+</head>
+<body>
+
+<a class="back-link" href="index.html">← Início</a>
+<button class="theme-toggle" id="theme-toggle" type="button">Modo claro</button>
+
+<div class="card">
+  <div class="coin" id="coin">?</div>
+  <button class="flip-btn" id="flip-btn" type="button">Jogar</button>
+</div>
+
+<script>
+(function(){
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('theme-toggle');
+  function applyTheme(theme){
+    root.setAttribute('data-theme', theme);
+    themeBtn.textContent = theme === 'light' ? 'Modo escuro' : 'Modo claro';
+    localStorage.setItem('theme', theme);
+  }
+  applyTheme(localStorage.getItem('theme')
+    || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+  themeBtn.addEventListener('click', function(){
+    applyTheme(root.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+  });
+})();
+
+(function(){
+  const coin = document.getElementById('coin');
+  const flipBtn = document.getElementById('flip-btn');
+
+  flipBtn.addEventListener('click', function(){
+    flipBtn.disabled = true;
+    coin.classList.remove('spin');
+    void coin.offsetWidth;
+    coin.classList.add('spin');
+    coin.textContent = '...';
+
+    setTimeout(function(){
+      const result = Math.random() < 0.5 ? 'Cara' : 'Coroa';
+      coin.textContent = result;
+      flipBtn.disabled = false;
+    }, 500);
+  });
+})();
+</script>
+
+</body>
+</html>

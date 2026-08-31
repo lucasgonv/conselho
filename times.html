@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorteio de Times</title>
+<style>
+  :root{
+    --bg:#111319; --panel:#1a1d26; --panel-2:#20232e; --border:#2b2f3d;
+    --text:#eeeee6; --muted:#8b8f9e; --accent:#ffc93c; --accent-text:#1a1508;
+  }
+  html[data-theme="light"]{
+    --bg:#f5f4f0; --panel:#ffffff; --panel-2:#eeece5; --border:#dcd9d0;
+    --text:#1c1c1c; --muted:#6b6b6b; --accent:#c98a1a; --accent-text:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+  body{padding:70px 20px 80px;}
+  a.back-link{position:fixed;top:16px;left:16px;color:var(--muted);text-decoration:none;
+    font-size:14px;border:1px solid var(--border);background:var(--panel-2);
+    border-radius:6px;padding:8px 12px;}
+  a.back-link:hover{border-color:var(--accent);color:var(--text);}
+  button.theme-toggle{position:fixed;top:16px;right:16px;}
+  button{font-family:inherit;cursor:pointer;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--text);border-radius:6px;
+    padding:10px 16px;font-size:14px;font-weight:600;}
+  button:hover{border-color:var(--accent);}
+  .wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;}
+  textarea{width:100%;min-height:140px;resize:vertical;background:var(--panel-2);
+    border:1px solid var(--border);color:var(--text);border-radius:6px;padding:10px;
+    font-family:inherit;font-size:13px;line-height:1.5;}
+  textarea:focus{outline:none;border-color:var(--accent);}
+  textarea::placeholder{color:var(--muted);}
+  .config{display:flex;align-items:center;gap:10px;margin-top:12px;}
+  .config label{font-size:13px;color:var(--muted);}
+  .config input{width:64px;background:var(--panel-2);border:1px solid var(--border);
+    color:var(--text);border-radius:6px;padding:8px 10px;font-family:inherit;font-size:14px;}
+  .config input:focus{outline:none;border-color:var(--accent);}
+  .sortear-btn{width:100%;background:var(--accent);color:var(--accent-text);
+    border-color:var(--accent);padding:12px;font-size:15px;margin-top:12px;}
+  .sortear-btn:hover{opacity:0.9;}
+  .teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+  .team{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px;}
+  .team h3{margin:0 0 8px;font-size:14px;color:var(--accent);}
+  .team ul{margin:0;padding-left:18px;font-size:14px;line-height:1.6;}
+  .empty{color:var(--muted);font-size:13px;}
+</style>
+</head>
+<body>
+
+<a class="back-link" href="index.html">← Início</a>
+<button class="theme-toggle" id="theme-toggle" type="button">Modo claro</button>
+
+<div class="wrap">
+  <div class="card">
+    <textarea id="names" placeholder="lucas&#10;yuri&#10;renzo&#10;daniel"></textarea>
+    <div class="config">
+      <label for="qtd-times">Número de times</label>
+      <input type="number" id="qtd-times" value="2" min="2" max="20">
+    </div>
+    <button class="sortear-btn" id="sortear-btn" type="button">Sortear times</button>
+  </div>
+  <div class="teams" id="teams"></div>
+</div>
+
+<script>
+(function(){
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('theme-toggle');
+  function applyTheme(theme){
+    root.setAttribute('data-theme', theme);
+    themeBtn.textContent = theme === 'light' ? 'Modo escuro' : 'Modo claro';
+    localStorage.setItem('theme', theme);
+  }
+  applyTheme(localStorage.getItem('theme')
+    || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+  themeBtn.addEventListener('click', function(){
+    applyTheme(root.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+  });
+})();
+
+(function(){
+  const namesInput = document.getElementById('names');
+  const qtdInput = document.getElementById('qtd-times');
+  const sortearBtn = document.getElementById('sortear-btn');
+  const teamsEl = document.getElementById('teams');
+
+  sortearBtn.addEventListener('click', function(){
+    const names = namesInput.value.split('\n')
+      .map(function(s){ return s.trim(); })
+      .filter(function(s){ return s.length > 0; });
+
+    const qtd = Math.max(parseInt(qtdInput.value) || 2, 2);
+
+    teamsEl.innerHTML = '';
+
+    if (names.length === 0){
+      teamsEl.innerHTML = '<p class="empty">adicione ao menos um nome</p>';
+      return;
+    }
+
+    for (let i = names.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = names[i]; names[i] = names[j]; names[j] = tmp;
+    }
+
+    const teams = [];
+    for (let i = 0; i < qtd; i++) teams.push([]);
+    names.forEach(function(name, i){
+      teams[i % qtd].push(name);
+    });
+
+    teams.forEach(function(team, i){
+      const div = document.createElement('div');
+      div.className = 'team';
+      const h3 = document.createElement('h3');
+      h3.textContent = 'Time ' + (i + 1);
+      const ul = document.createElement('ul');
+      team.forEach(function(name){
+        const li = document.createElement('li');
+        li.textContent = name;
+        ul.appendChild(li);
+      });
+      div.appendChild(h3);
+      div.appendChild(ul);
+      teamsEl.appendChild(div);
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
